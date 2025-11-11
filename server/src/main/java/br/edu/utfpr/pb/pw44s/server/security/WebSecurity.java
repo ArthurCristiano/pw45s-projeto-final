@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -26,6 +27,7 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 
 @EnableWebSecurity
 @Configuration
+@EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurity {
     // Service responsável por buscar um usuário no banco de dados por meio do método loadByUsername()
     private final AuthService authService;
@@ -57,23 +59,22 @@ public class WebSecurity {
 
         // configura a authorização das requisições
         http.authorizeHttpRequests((authorize) -> authorize
-                //permite que a rota "/users" seja acessada, mesmo sem o usuário estar autenticado desde que o método HTTP da requisição seja POST
+
                 .requestMatchers(antMatcher(HttpMethod.POST, "/users/**")).permitAll()
-
                 .requestMatchers(antMatcher(HttpMethod.PUT, "/users/**")).authenticated()
-
-                //permite que a rota "/error" seja acessada por qualquer requisição mesmo o usuário não estando autenticado
                 .requestMatchers(antMatcher("/error/**")).permitAll()
-                //permite que a rota "/h2-console" seja acessada por qualquer requisição mesmo o usuário não estando autenticado
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(antMatcher("/h2-console/**")).permitAll()
-                //as demais rotas da aplicação só podem ser acessadas se o usuário estiver autenticado
 
-                //GET das categorias
                 .requestMatchers(antMatcher(HttpMethod.GET, "/categories/**")).permitAll()
 
-                .requestMatchers(antMatcher(HttpMethod.GET, "/products/**")).permitAll()
+                .requestMatchers(HttpMethod.POST,"/products/**").hasAnyRole("ADMIN")
 
-                .requestMatchers(antMatcher(HttpMethod.GET, "/products/categories/**")).permitAll()
+                .requestMatchers(HttpMethod.GET,"/products/**").hasAnyRole("ADMIN",  "USER")
+
+                .requestMatchers(HttpMethod.GET,"/products/categories/**").hasAnyRole("ADMIN",  "USER")
+
+                .requestMatchers(HttpMethod.POST,"/categories/**").hasAnyRole("USER")
 
                 .anyRequest().authenticated()
         );
