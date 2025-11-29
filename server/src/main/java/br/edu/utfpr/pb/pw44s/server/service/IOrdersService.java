@@ -10,4 +10,5 @@ public interface IOrdersService extends ICrudService<Orders, Long> {
     List<OrdersDTO> findByUser();
     OrdersDTO updateStatus(Long id, String status);
     OrdersDTO updateOrderAddress(Long orderId, Long addressId);
+    List<OrdersDTO> findAllAdmin();
 }

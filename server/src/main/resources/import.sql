@@ -1,6 +1,15 @@
 -- User -
-INSERT INTO cad_User(name, username, password, email) VALUES ('Administrador', 'admin', 'admin','adm@adm.com');
-INSERT INTO cad_User(name, username, password, email) VALUES ('Teste', 'test', 'test','teste@teste.com');
+INSERT INTO cad_User(name, username, password, email) VALUES ('admin', 'admin', '$2a$10$asw4jF/tvff.zM.zlF7bwOeEkgghzB//Zm0XO4ulEEp1pzP4VYmmO','adm@adm.com');
+INSERT INTO cad_User(name, username, password, email) VALUES ('Teste', 'test', '$2a$10$asw4jF/tvff.zM.zlF7bwOeEkgghzB//Zm0XO4ulEEp1pzP4VYmmO','teste@teste.com');
+
+-- Authority
+insert into tb_authority (authority) values ('ROLE_ADMIN');
+insert into tb_authority (authority) values ('ROLE_USER');
+
+-- User Authority
+insert into tb_user_authorities (user_id, authority_id) values (1, 1);
+insert into tb_user_authorities (user_id, authority_id) values (2, 2);
+
 
 -- Category
 INSERT INTO cad_category (name) VALUES ('Laptops');

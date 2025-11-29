@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -41,19 +42,23 @@ public class User implements UserDetails {
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$", message = "{br.edu.utfpr.pb.pw44s.server.senha}")
     private String password;
 
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER, cascade =
             {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name = "tb_user_authorities",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id"))
-    private Set<Authority> userAuthorities;
+
+    @Builder.Default
+    private Set<Authority> userAuthorities = new HashSet<>();
 
     @Override
-    @Transient
-    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
-        return new ArrayList<>(userAuthorities);
+        if (this.userAuthorities == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(this.userAuthorities);
     }
 
     @NotNull

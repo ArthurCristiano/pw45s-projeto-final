@@ -1,5 +1,7 @@
 package br.edu.utfpr.pb.pw44s.server.service;
 
+import br.edu.utfpr.pb.pw44s.server.dto.UserDTO;
+import br.edu.utfpr.pb.pw44s.server.model.Authority;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;

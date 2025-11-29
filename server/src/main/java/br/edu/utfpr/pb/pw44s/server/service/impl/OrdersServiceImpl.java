@@ -2,6 +2,7 @@ package br.edu.utfpr.pb.pw44s.server.service.impl;
 
 import br.edu.utfpr.pb.pw44s.server.dto.OrderItemDTO;
 import br.edu.utfpr.pb.pw44s.server.dto.OrdersDTO;
+import br.edu.utfpr.pb.pw44s.server.dto.UserDTO;
 import br.edu.utfpr.pb.pw44s.server.model.*;
 import br.edu.utfpr.pb.pw44s.server.repository.*;
 import br.edu.utfpr.pb.pw44s.server.service.IOrdersService;
@@ -49,8 +50,13 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
     @Override
     @Transactional
     public Orders save(Orders entity) {
-        // Implementação padrão do CRUD
         return getRepository().save(entity);
+    }
+
+    public List<OrdersDTO> findAllAdmin() {
+        return ordersRepository.findAll().stream()
+                .map(OrdersDTO::new)
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -62,7 +68,7 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
         order.setDate(LocalDateTime.now());
         order.setUser(user);
         order.setAddress_id(null);
-        order.setStatus("Pendente");
+        order.setStatus("AGUARDANDO_PAGAMENTO");
         Orders savedOrder = ordersRepository.save(order);
 
         List<OrderItens> items = orderDTO.getItems().stream().map(itemDTO -> {
@@ -82,7 +88,7 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
 
         orderDTO.setId(savedOrder.getId());
         orderDTO.setDate(savedOrder.getDate());
-        orderDTO.setUserId(user.getId());
+        orderDTO.setUser(new UserDTO(user));
 
         return orderDTO;
     }
@@ -95,7 +101,8 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
         return ordersRepository.findByUser(user).stream()
                 .map(order -> {
                     OrdersDTO dto = modelMapper.map(order, OrdersDTO.class);
-                    dto.setUserId(user.getId());
+
+                    dto.setUser(new UserDTO(user));
 
                     List<OrderItemDTO> itemDTOs = order.getItems().stream().map(item -> {
                         return OrderItemDTO.builder()
@@ -121,7 +128,7 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
         order.setStatus(status);
         Orders updatedOrder = ordersRepository.save(order);
 
-        return modelMapper.map(updatedOrder, OrdersDTO.class);
+        return new OrdersDTO(updatedOrder);
     }
 
     @Transactional
@@ -135,6 +142,6 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
         order.setAddress_id(address);
         Orders updatedOrder = ordersRepository.save(order);
 
-        return modelMapper.map(updatedOrder, OrdersDTO.class);
+        return new OrdersDTO(updatedOrder);
     }
 }

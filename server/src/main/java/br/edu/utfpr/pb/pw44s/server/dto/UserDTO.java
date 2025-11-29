@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 
 @Data
 @NoArgsConstructor
@@ -32,11 +35,14 @@ public class UserDTO {
     @Size(min = 4)
     private String email;
 
+    private Collection<? extends GrantedAuthority> authorities;
+
     public UserDTO(User user) {
         this.id = user.getId();
         this.name = user.getName();
         this.username = user.getUsername();
         this.password = user.getPassword();
         this.email = user.getEmail();
+        this.authorities = user.getAuthorities();
     }
 }
