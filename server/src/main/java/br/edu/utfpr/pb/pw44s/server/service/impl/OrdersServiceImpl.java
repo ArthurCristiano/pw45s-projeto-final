@@ -5,6 +5,7 @@ import br.edu.utfpr.pb.pw44s.server.dto.OrdersDTO;
 import br.edu.utfpr.pb.pw44s.server.dto.UserDTO;
 import br.edu.utfpr.pb.pw44s.server.model.*;
 import br.edu.utfpr.pb.pw44s.server.repository.*;
+import br.edu.utfpr.pb.pw44s.server.service.EmailService;
 import br.edu.utfpr.pb.pw44s.server.service.IOrdersService;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,19 +28,22 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final AddressRepository addressRepository;
+    private final EmailService emailService;
 
     public OrdersServiceImpl(OrdersRepository ordersRepository,
                              OrderItensRepository orderItensRepository,
                              UserRepository userRepository,
                              ProductRepository productRepository,
                              ModelMapper modelMapper,
-                             AddressRepository addressRepository) {
+                             AddressRepository addressRepository,
+                             EmailService emailService) {
         this.ordersRepository = ordersRepository;
         this.orderItensRepository = orderItensRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.modelMapper = modelMapper;
         this.addressRepository = addressRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -127,6 +131,16 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
 
         order.setStatus(status);
         Orders updatedOrder = ordersRepository.save(order);
+
+        if (updatedOrder.getUser() != null && updatedOrder.getUser().getEmail() != null) {
+            new Thread(() -> {
+                emailService.sendStatusChangeEmail(
+                        updatedOrder.getUser().getEmail(),
+                        updatedOrder.getId(),
+                        updatedOrder.getStatus()
+                );
+            }).start();
+        }
 
         return new OrdersDTO(updatedOrder);
     }
