@@ -1,5 +1,6 @@
 package br.edu.utfpr.pb.pw44s.server.service.impl;
 
+import br.edu.utfpr.pb.pw44s.server.dto.AttachmentResponseDTO;
 import br.edu.utfpr.pb.pw44s.server.dto.OrderItemDTO;
 import br.edu.utfpr.pb.pw44s.server.dto.OrdersDTO;
 import br.edu.utfpr.pb.pw44s.server.dto.UserDTO;
@@ -13,8 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +32,7 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
     private final ModelMapper modelMapper;
     private final AddressRepository addressRepository;
     private final EmailService emailService;
+    private final OrderAttachmentRepository attachmentRepository;
 
     public OrdersServiceImpl(OrdersRepository ordersRepository,
                              OrderItensRepository orderItensRepository,
@@ -36,7 +40,8 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
                              ProductRepository productRepository,
                              ModelMapper modelMapper,
                              AddressRepository addressRepository,
-                             EmailService emailService) {
+                             EmailService emailService,
+                             OrderAttachmentRepository attachmentRepository) {
         this.ordersRepository = ordersRepository;
         this.orderItensRepository = orderItensRepository;
         this.userRepository = userRepository;
@@ -44,6 +49,7 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
         this.modelMapper = modelMapper;
         this.addressRepository = addressRepository;
         this.emailService = emailService;
+        this.attachmentRepository = attachmentRepository;
     }
 
     @Override
@@ -158,4 +164,38 @@ public class OrdersServiceImpl extends CrudServiceImpl<Orders, Long> implements 
 
         return new OrdersDTO(updatedOrder);
     }
+
+    @Override
+    @Transactional
+    public void uploadAttachment(Long orderId, MultipartFile file) {
+        Orders order = ordersRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
+
+        try {
+            OrderAttachment attachment = OrderAttachment.builder()
+                    .fileName(file.getOriginalFilename())
+                    .fileType(file.getContentType())
+                    .data(file.getBytes())
+                    .order(order)
+                    .build();
+
+            attachmentRepository.save(attachment);
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao ler o arquivo", e);
+        }
+    }
+
+    @Override
+    public List<AttachmentResponseDTO> getAttachments(Long orderId) {
+        return attachmentRepository.findByOrderId(orderId).stream()
+                .map(AttachmentResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public OrderAttachment getAttachmentById(Long attachmentId) {
+        return attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new RuntimeException("Anexo não encontrado"));
+    }
+
 }
